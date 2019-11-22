@@ -9,6 +9,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+
+/// <summary>
+/// ////////////рабочая версия
+/// </summary>
+
 namespace CleverHome_1._1
 {
     public partial class Form1 : Form
@@ -128,6 +133,6 @@ namespace CleverHome_1._1
             button3.Text = "Connect";
         }
     }
-
+    
 
 }

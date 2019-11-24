@@ -32,7 +32,6 @@ namespace CleverHome_1._1
         }
 
 
-
         private void serialport_DataReceived(object sender, System.IO.Ports.SerialDataReceivedEventArgs e)
         {
             string DataString = serialport.ReadLine();
@@ -55,15 +54,22 @@ namespace CleverHome_1._1
 
         private void button1_Click(object sender, EventArgs e)
         {
-            if (button1.Text.Equals("Включить"))
+            if (isConnected == false)
             {
-                button1.Text = "Выключить";
-                serialport.Write("1");
+                return;
             }
             else
             {
-                button1.Text = "Включить";
-                serialport.Write("0");
+                if (button1.Text.Equals("Включить"))
+                {
+                    button1.Text = "Выключить";
+                    serialport.Write("1");
+                }
+                else
+                {
+                    button1.Text = "Включить";
+                    serialport.Write("0");
+                }
             }
             // serialPort.Write("1");
         }

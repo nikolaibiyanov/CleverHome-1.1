@@ -18,7 +18,9 @@ namespace CleverHome_1._1
 {
     public partial class Form1 : Form
     {
+        // string curTimeLong = DateTime.Now.ToLongTimeString();
         bool isConnected = false;
+        bool isInRange;          //управление отоплением
         SerialPort serialport;
         public Form1()
         {
@@ -29,6 +31,15 @@ namespace CleverHome_1._1
             //serialPort.DtrEnable = true;
             //serialPort.Open();
             //serialPort.DataReceived += serialPort_DataReceived;
+
+            timer1.Enabled = true;  //таймер времени        
+            timer1.Interval = 1000;
+
+            timer2.Enabled = true;  //таймер на отопление
+            timer2.Interval = 1000;
+
+
+            DateTime data = DateTime.Now;
         }
 
 
@@ -51,6 +62,7 @@ namespace CleverHome_1._1
             textBox1.Text = temper;
             textBox2.Text = hidim;
         }
+
 
         private void button1_Click(object sender, EventArgs e)
         {
@@ -105,8 +117,6 @@ namespace CleverHome_1._1
 
         }
 
-     
-
 
         private void connectToArduino()
         {
@@ -115,10 +125,10 @@ namespace CleverHome_1._1
                 isConnected = true;
                 string selectedPort = comboBox1.GetItemText(comboBox1.SelectedItem);
                 serialport = new SerialPort(selectedPort, 9600, Parity.None, 8, StopBits.One);
-              //  serialport.Open();
+                //  serialport.Open();
 
-           //     serialPort.PortName = "COM12";
-             //   serialPort.BaudRate = 9600;
+                //     serialPort.PortName = "COM12";
+                //   serialPort.BaudRate = 9600;
                 serialport.DtrEnable = true;
                 serialport.Open();
                 serialport.DataReceived += serialport_DataReceived;
@@ -132,11 +142,67 @@ namespace CleverHome_1._1
 
             };
         }
+
         private void disconnectFromArduino()
         {
             isConnected = false;
             serialport.Close();
             button3.Text = "Connect";
+        }
+
+        /*
+        public void DrawStringPointF()
+        {
+            // Create string to draw.
+            String drawString = DateTime.Now.ToString();
+
+            // Create font and brush.
+            Font drawFont = new Font("Arial", 16);
+            SolidBrush drawBrush = new SolidBrush(Color.Black);
+
+            // Create point for upper-left corner of drawing.
+            PointF drawPoint = new PointF(150.0F, 150.0F);
+
+            // Draw string to screen.
+            Graphics.FromHwnd(this.Handle).DrawString(drawString, drawFont, drawBrush, drawPoint);
+        }
+        */
+
+        private Boolean ProverkaVremeniOtoplenie() {
+
+            var start = TimeSpan.Parse("00:47:00.0000000");
+            var end = TimeSpan.Parse("00:47:30.0000000");
+            var now = DateTime.Now.TimeOfDay;
+
+            isInRange = start <= now && now <= end;
+            return isInRange;
+        }
+
+        private void StartOtoplenie(bool isInRange) {
+
+            if (isInRange == true)
+            {
+                label5.Text = "Отопление включено";
+            }
+            else
+            {
+                label5.Text = "Отопление OFF";
+            }
+        }
+        
+    
+
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            //label3.Text = DateTime.Now.ToLongTimeString();
+            label4.Text = DateTime.Now.ToString("F");          
+        }
+
+        private void timer2_Tick(object sender, EventArgs e)
+        {
+            ProverkaVremeniOtoplenie();
+            StartOtoplenie(isInRange);
         }
     }
     

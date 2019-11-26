@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Globalization;
 using System.IO.Ports;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -22,6 +24,9 @@ namespace CleverHome_1._1
         bool isConnected = false;
         bool isInRange;          //управление отоплением
         SerialPort serialport;
+
+        String temper,hidim;
+
         public Form1()
         {
             InitializeComponent();
@@ -35,8 +40,8 @@ namespace CleverHome_1._1
             timer1.Enabled = true;  //таймер времени        
             timer1.Interval = 1000;
 
-            timer2.Enabled = true;  //таймер на отопление
-            timer2.Interval = 1000;
+            
+            timer2.Interval = 2000;
 
 
             DateTime data = DateTime.Now;
@@ -50,8 +55,8 @@ namespace CleverHome_1._1
             if (DataString.Contains(":"))
             {
                 string[] word = DataString.Split(':');
-                string temper = word[0];
-                string hidim = word[1];
+                temper = word[0];
+                hidim = word[1];
 
                 this.BeginInvoke(new LineReceivedEvent(LineReceived), temper, hidim);
             }
@@ -64,7 +69,7 @@ namespace CleverHome_1._1
         }
 
 
-        private void button1_Click(object sender, EventArgs e)
+        private void button1_Click(object sender, EventArgs e)      //включчение (лед13)
         {
             if (isConnected == false)
             {
@@ -82,11 +87,10 @@ namespace CleverHome_1._1
                     button1.Text = "Включить";
                     serialport.Write("0");
                 }
-            }
-            // serialPort.Write("1");
+            }         
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        private void button2_Click(object sender, EventArgs e)      //обновление портов
         {
             comboBox1.Items.Clear();
             // Получаем список COM портов доступных в системе
@@ -104,7 +108,7 @@ namespace CleverHome_1._1
 
         }
 
-        private void button3_Click(object sender, EventArgs e)
+        private void button3_Click(object sender, EventArgs e)   //cоединиться
         {
             if (!isConnected)
             {
@@ -115,7 +119,7 @@ namespace CleverHome_1._1
                 disconnectFromArduino();
             }
 
-        }
+        }    
 
 
         private void connectToArduino()
@@ -132,7 +136,8 @@ namespace CleverHome_1._1
                 serialport.DtrEnable = true;
                 serialport.Open();
                 serialport.DataReceived += serialport_DataReceived;
-                button3.Text = "Disconnect";
+                button3.Text = "Отсоединиться";
+                timer2.Enabled = true;  //таймер на отопление
             }
             catch (Exception e)
             {
@@ -147,7 +152,7 @@ namespace CleverHome_1._1
         {
             isConnected = false;
             serialport.Close();
-            button3.Text = "Connect";
+            button3.Text = "Соединиться";
         }
 
         /*
@@ -169,40 +174,62 @@ namespace CleverHome_1._1
         */
 
         private Boolean ProverkaVremeniOtoplenie() {
+            var start = TimeSpan.Parse("16:30:00.0000000");   //в этом промежутке отопление включено c 16-00 до 7-30
+            var end = TimeSpan.Parse("23:59:59.000000");     //
 
-            var start = TimeSpan.Parse("00:47:00.0000000");
-            var end = TimeSpan.Parse("00:47:30.0000000");
+            var start2 = TimeSpan.Parse("00:00:00.0000000");
+            var end2 = TimeSpan.Parse("07:29:00.0000000");
+
             var now = DateTime.Now.TimeOfDay;
-
-            isInRange = start <= now && now <= end;
-            return isInRange;
-        }
-
-        private void StartOtoplenie(bool isInRange) {
-
-            if (isInRange == true)
+            bool  isInRange1 = start <= now && now <= end;
+            bool isInRange2 = start2 <= now && now <= end2;
+            if (isInRange1 || isInRange2)
             {
-                label5.Text = "Отопление включено";
+                // isInRange = !isInRange;
+                isInRange = true;
+                return isInRange;
             }
             else
             {
-                label5.Text = "Отопление OFF";
+                isInRange = false;
+                return isInRange;
+            }
+        }
+
+        private void StartOtoplenieNight(bool isInRange) {
+            if (isConnected == true&&hidim.Length>0)
+            {
+                String tempe = temper.Replace("\r", "");
+                String temp = tempe.Replace(".", ",");
+                //    CultureInfo temp_culture = Thread.CurrentThread.CurrentCulture;
+                //    Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture("en-US");
+                double temperatura = double.Parse(temp);
+
+             //   Thread.CurrentThread.CurrentCulture = temp_culture;
+                if (isInRange == true && (temperatura < 27.10))
+                {
+                    label5.Text = "Отопление включено";
+                }
+                else
+                {
+                    label5.Text = "Отопление OFF";
+                }
             }
         }
         
     
 
 
-        private void timer1_Tick(object sender, EventArgs e)
+        private void timer1_Tick(object sender, EventArgs e)        //таймер на время
         {
             //label3.Text = DateTime.Now.ToLongTimeString();
             label4.Text = DateTime.Now.ToString("F");          
-        }
+        }      
 
-        private void timer2_Tick(object sender, EventArgs e)
+        private void timer2_Tick(object sender, EventArgs e)        //таймер на отопление
         {
             ProverkaVremeniOtoplenie();
-            StartOtoplenie(isInRange);
+            StartOtoplenieNight(isInRange);
         }
     }
     

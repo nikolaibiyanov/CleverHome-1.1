@@ -25,7 +25,8 @@ namespace CleverHome_1._1
         bool isInRange;          //управление отоплением
         SerialPort serialport;
 
-        String temper,hidim;
+        new String temper;
+            new String hidim;
 
         public Form1()
         {
@@ -59,6 +60,8 @@ namespace CleverHome_1._1
                 hidim = word[1];
 
                 this.BeginInvoke(new LineReceivedEvent(LineReceived), temper, hidim);
+
+
             }
         }
         private delegate void LineReceivedEvent(string temper, string hidim);
@@ -197,24 +200,40 @@ namespace CleverHome_1._1
         }
 
         private void StartOtoplenieNight(bool isInRange) {
-            if (isConnected == true&&hidim.Length>0)
+            try
             {
-                String tempe = temper.Replace("\r", "");
-                String temp = tempe.Replace(".", ",");
-                //    CultureInfo temp_culture = Thread.CurrentThread.CurrentCulture;
-                //    Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture("en-US");
-                double temperatura = double.Parse(temp);
+                if (isConnected == true && temper.Length > 0)
+                {
+                    String tempe = temper.Replace("\r", "");
+                    String temp = tempe.Replace(".", ",");
+                    //    CultureInfo temp_culture = Thread.CurrentThread.CurrentCulture;
+                    //    Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture("en-US");
+                    double temperatura = double.Parse(temp);
 
-             //   Thread.CurrentThread.CurrentCulture = temp_culture;
-                if (isInRange == true && (temperatura < 27.10))
-                {
-                    label5.Text = "Отопление включено";
-                }
-                else
-                {
-                    label5.Text = "Отопление OFF";
+                    //   Thread.CurrentThread.CurrentCulture = temp_culture;
+                    if (isInRange == true && (temperatura < 27.10))       // включение отопления в вечернее время
+                    {
+                        label5.Text = " включено";
+                    }
+                    else
+                    {
+                        label5.Text = " выключено";
+                    }
+
+                    if (isInRange == false && (temperatura < 27.50))    //включение отопления в дневное время
+                    {
+                        label7.Text = " включено";
+                    }
+                    else
+                    {
+                        label7.Text = " выключено";
+                    }
+
+
+
                 }
             }
+            catch (Exception e) { };
         }
         
     

@@ -23,11 +23,13 @@ namespace CleverHome_1._1
         // string curTimeLong = DateTime.Now.ToLongTimeString();
         bool isConnected = false;
         bool isInRange;          //управление отоплением
+        bool provopendoors = false;
+
         SerialPort serialport;
+        String temper, hidim, dostup;
+        // new String nenyz, dostup;
 
-        new String temper;
-            new String hidim;
-
+        int a;  //хранит значение техтбокс3
         public Form1()
         {
             InitializeComponent();
@@ -39,39 +41,45 @@ namespace CleverHome_1._1
             //serialPort.DataReceived += serialPort_DataReceived;
 
             timer1.Enabled = true;  //таймер времени        
-            timer1.Interval = 1000;
-
-            
-            timer2.Interval = 2000;
-
+            timer1.Interval = 1000;        
+            timer2.Interval = 2000;   //таймер отопления
+            timer3.Interval = 3000;   //таймер открытия двери
 
             DateTime data = DateTime.Now;
         }
 
-
         private void serialport_DataReceived(object sender, System.IO.Ports.SerialDataReceivedEventArgs e)
         {
-            string DataString = serialport.ReadLine();
-
-            if (DataString.Contains(":"))
+            try
             {
-                string[] word = DataString.Split(':');
-                temper = word[0];
-                hidim = word[1];
+                string DataString = serialport.ReadLine();
 
-                this.BeginInvoke(new LineReceivedEvent(LineReceived), temper, hidim);
-
-
+                if (DataString.Contains(":"))
+                {
+                    string[] word = DataString.Split(':');
+                    temper = word[0];
+                    hidim = word[1];
+                    dostup = word[2];
+                    this.BeginInvoke(new LineReceivedEvent(LineReceived), temper, hidim, dostup);
+                }
             }
+            catch (Exception exException) { };
         }
-        private delegate void LineReceivedEvent(string temper, string hidim);
-        private void LineReceived(string temper, string hidim)
+
+        private delegate void LineReceivedEvent(string temper, string hidim,string dostup);
+
+        private void LineReceived(string temper, string hidim,string dostup)
         {
             textBox1.Text = temper;
             textBox2.Text = hidim;
+            textBox3.Text = dostup;
         }
 
-
+        private void LineReceived(string dostup)
+        {
+            textBox3.Text = dostup;
+        }
+        
         private void button1_Click(object sender, EventArgs e)      //включчение (лед13)
         {
             if (isConnected == false)
@@ -90,7 +98,7 @@ namespace CleverHome_1._1
                     button1.Text = "Включить";
                     serialport.Write("0");
                 }
-            }         
+            }
         }
 
         private void button2_Click(object sender, EventArgs e)      //обновление портов
@@ -122,7 +130,7 @@ namespace CleverHome_1._1
                 disconnectFromArduino();
             }
 
-        }    
+        }
 
 
         private void connectToArduino()
@@ -132,21 +140,18 @@ namespace CleverHome_1._1
                 isConnected = true;
                 string selectedPort = comboBox1.GetItemText(comboBox1.SelectedItem);
                 serialport = new SerialPort(selectedPort, 9600, Parity.None, 8, StopBits.One);
-                //  serialport.Open();
-
-                //     serialPort.PortName = "COM12";
-                //   serialPort.BaudRate = 9600;
                 serialport.DtrEnable = true;
                 serialport.Open();
                 serialport.DataReceived += serialport_DataReceived;
                 button3.Text = "Отсоединиться";
                 timer2.Enabled = true;  //таймер на отопление
+                timer3.Enabled = true;   //таймер открытия двери
             }
             catch (Exception e)
             {
                 MessageBox.Show("не удалось открыть порт");
                 isConnected = false;
-                connectToArduino();
+               // connectToArduino();
 
             };
         }
@@ -184,7 +189,7 @@ namespace CleverHome_1._1
             var end2 = TimeSpan.Parse("07:29:00.0000000");
 
             var now = DateTime.Now.TimeOfDay;
-            bool  isInRange1 = start <= now && now <= end;
+            bool isInRange1 = start <= now && now <= end;
             bool isInRange2 = start2 <= now && now <= end2;
             if (isInRange1 || isInRange2)
             {
@@ -228,29 +233,75 @@ namespace CleverHome_1._1
                     {
                         label7.Text = " выключено";
                     }
-
-
-
                 }
             }
             catch (Exception e) { };
         }
-        
-    
 
+      
 
-        private void timer1_Tick(object sender, EventArgs e)        //таймер на время
+        private void timer1_Tick(object sender, EventArgs e)        //таймер на время, отобразить время
         {
-            //label3.Text = DateTime.Now.ToLongTimeString();
-            label4.Text = DateTime.Now.ToString("F");          
-        }      
+            label4.Text = DateTime.Now.ToString("F");
+
+        }
 
         private void timer2_Tick(object sender, EventArgs e)        //таймер на отопление
         {
             ProverkaVremeniOtoplenie();
             StartOtoplenieNight(isInRange);
         }
+
+
+        private void timer3_Tick_1(object sender, EventArgs e)
+        {
+            proverkaopendoors();
+            opendoors(provopendoors);
+        }
+
+        private void button4_Click(object sender, EventArgs e)      //закрыть дверь
+        {
+            if (provopendoors == false)
+            {
+                label8.Text = "Дверь открыта";
+            }
+            else
+            {
+                a = Int32.Parse(textBox3.Text);
+                if (a == 872227033)
+                    label8.Text = "Дверь закрыта";
+                opendoors( false);              
+            }
+        }
+
+        void opendoors(bool provopendoors)
+        { if (provopendoors == false)
+            {
+                label8.Text = "Дверь закрыта";
+                provopendoors = false;
+            }
+            else
+            {
+                label8.Text = "Дверь открыта";
+            }
+        }
+
+        private Boolean proverkaopendoors()
+        {
+            a = Int32.Parse(textBox3.Text);
+            if (a==872227033)
+            {             
+                provopendoors = true;
+                return provopendoors;     
+            }
+            else
+            { 
+                provopendoors = false;
+                return provopendoors;
+            } 
+        }
     }
+   
     
 
 }

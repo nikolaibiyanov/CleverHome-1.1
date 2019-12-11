@@ -21,26 +21,18 @@ namespace CleverHome_1._1
         bool isConnected = false;
         bool isInRange;          //управление отоплением
         bool provopendoors = false;
-
+        bool ventil = false;
         SerialPort serialport;
         String temper, hidim, dostup;
 
         int a;  //хранит значение техтбокс3
         public Form1()
         {
-            InitializeComponent();
-            // Открываем порт, и задаем скорость в 9600 бод
-            //serialPort.PortName = "COM12";
-            //serialPort.BaudRate = 9600;
-            //serialPort.DtrEnable = true;
-            //serialPort.Open();
-            //serialPort.DataReceived += serialPort_DataReceived;
-
+            InitializeComponent();      
             timer1.Enabled = true;  //таймер времени        
             timer1.Interval = 1000;        
             timer2.Interval = 2000;   //таймер отопления
             timer3.Interval = 3000;   //таймер открытия двери
-
             DateTime data = DateTime.Now;
         }
 
@@ -49,7 +41,6 @@ namespace CleverHome_1._1
             try
             {
                 string DataString = serialport.ReadLine();
-
                 if (DataString.Contains(":"))
                 {
                     string[] word = DataString.Split(':');
@@ -76,7 +67,7 @@ namespace CleverHome_1._1
             textBox3.Text = dostup;
         }
         
-        private void button1_Click(object sender, EventArgs e)      //включчение (лед13)
+        private void button1_Click(object sender, EventArgs e)      //включчение реле
         {
             if (isConnected == false)
             {
@@ -112,7 +103,6 @@ namespace CleverHome_1._1
                 //добавляем доступные COM порты в список              
                 comboBox1.Items.Add(s);
             }
-
         }
 
         private void button3_Click(object sender, EventArgs e)   //cоединиться
@@ -125,7 +115,6 @@ namespace CleverHome_1._1
             {
                 disconnectFromArduino();
             }
-
         }
 
 
@@ -147,8 +136,6 @@ namespace CleverHome_1._1
             {
                 MessageBox.Show("не удалось открыть порт");
                 isConnected = false;
-               // connectToArduino();
-
             };
         }
 
@@ -183,14 +170,13 @@ namespace CleverHome_1._1
             var end = TimeSpan.Parse("23:59:59.000000");     //
 
             var start2 = TimeSpan.Parse("00:00:00.0000000");
-            var end2 = TimeSpan.Parse("07:29:00.0000000");
+            var end2 = TimeSpan.Parse("07:30:00.0000000");
 
             var now = DateTime.Now.TimeOfDay;
             bool isInRange1 = start <= now && now <= end;
             bool isInRange2 = start2 <= now && now <= end2;
             if (isInRange1 || isInRange2)
             {
-                // isInRange = !isInRange;
                 isInRange = true;
                 return isInRange;
             }
@@ -201,6 +187,33 @@ namespace CleverHome_1._1
             }
         }
 
+        private void StartVentil(bool vent)
+        {
+            try
+            {
+                if (isConnected == true && hidim.Length > 0)
+                {
+                    String hidimit = hidim.Replace("\r", "");
+                    String hidimi = hidim.Replace(".", ",");
+                    //    CultureInfo temp_culture = Thread.CurrentThread.CurrentCulture;
+                    //    Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture("en-US");
+                    double hid = double.Parse(hidimi);
+
+                    //   Thread.CurrentThread.CurrentCulture = temp_culture;
+                    if (vent == false && (hid > 60.00))       // включение отопления в вечернее время
+                    {
+                        label13.Text = " включено";
+                        serialport.Write("21");
+                    }
+                    else
+                    {
+                        label13.Text = " выключено";
+                        serialport.Write("20");
+                    }
+                }
+            }
+            catch (Exception e) { };
+        }
 
         private void StartOtoplenieNight(bool isInRange) {
             try
@@ -212,24 +225,27 @@ namespace CleverHome_1._1
                     //    CultureInfo temp_culture = Thread.CurrentThread.CurrentCulture;
                     //    Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture("en-US");
                     double temperatura = double.Parse(temp);
-
                     //   Thread.CurrentThread.CurrentCulture = temp_culture;
                     if (isInRange == true && (temperatura < 27.10))       // включение отопления в вечернее время
                     {
                         label5.Text = " включено";
+                        serialport.Write("11");
                     }
                     else
                     {
                         label5.Text = " выключено";
+                        serialport.Write("10");
                     }
 
-                    if (isInRange == false && (temperatura < 27.50))    //включение отопления в дневное время
+                    if (isInRange == false && (temperatura < 17.50))    //включение отопления в дневное время
                     {
                         label7.Text = " включено";
+                        serialport.Write("11");
                     }
                     else
                     {
                         label7.Text = " выключено";
+                        serialport.Write("10");
                     }
                 }
             }
@@ -240,13 +256,13 @@ namespace CleverHome_1._1
         private void timer1_Tick(object sender, EventArgs e)        //таймер на время, отобразить время
         {
             label4.Text = DateTime.Now.ToString("F");
-
         }
 
         private void timer2_Tick(object sender, EventArgs e)        //таймер на отопление
         {
             ProverkaVremeniOtoplenie();
             StartOtoplenieNight(isInRange);
+            StartVentil(ventil);
         }
 
 
@@ -262,16 +278,33 @@ namespace CleverHome_1._1
             if (provopendoors == false)
             {
                 label8.Text = "Дверь открыта";
+                serialport.Write("31");
             }
             else
             {
                 a = Int32.Parse(textBox3.Text);
                 if (a == 872227033)
                     label8.Text = "Дверь закрыта";
+                serialport.Write("30");
                 opendoors( false);              
             }
         }
 
+        private void trackBar1_Scroll(object sender, EventArgs e) //Изменение температуры
+        {
+            try {
+                trackBar1.Value = Convert.ToInt32(textBox4.Text);
+                textBox4.Text = trackBar1.Value.ToString();
+            }
+            catch (Exception exception) { };
+        }
+
+        
+        private void trackBar2_Scroll(object sender, EventArgs e)
+        {
+             trackBar2.Value = Convert.ToInt32(textBox5.Text);
+             textBox5.Text = trackBar2.Value.ToString();
+        }
 
         void opendoors(bool provopendoors)
         { if (provopendoors == false)

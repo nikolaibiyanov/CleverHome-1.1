@@ -12,22 +12,18 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 
 
-/// <summary>
-/// ////////////рабочая версия
-/// </summary>
 
 namespace CleverHome_1._1
 {
     public partial class Form1 : Form
     {
-        // string curTimeLong = DateTime.Now.ToLongTimeString();
+ 
         bool isConnected = false;
         bool isInRange;          //управление отоплением
         bool provopendoors = false;
 
         SerialPort serialport;
         String temper, hidim, dostup;
-        // new String nenyz, dostup;
 
         int a;  //хранит значение техтбокс3
         public Form1()
@@ -156,6 +152,7 @@ namespace CleverHome_1._1
             };
         }
 
+
         private void disconnectFromArduino()
         {
             isConnected = false;
@@ -204,6 +201,7 @@ namespace CleverHome_1._1
             }
         }
 
+
         private void StartOtoplenieNight(bool isInRange) {
             try
             {
@@ -237,8 +235,7 @@ namespace CleverHome_1._1
             }
             catch (Exception e) { };
         }
-
-      
+ 
 
         private void timer1_Tick(object sender, EventArgs e)        //таймер на время, отобразить время
         {
@@ -259,6 +256,7 @@ namespace CleverHome_1._1
             opendoors(provopendoors);
         }
 
+
         private void button4_Click(object sender, EventArgs e)      //закрыть дверь
         {
             if (provopendoors == false)
@@ -274,6 +272,7 @@ namespace CleverHome_1._1
             }
         }
 
+
         void opendoors(bool provopendoors)
         { if (provopendoors == false)
             {
@@ -285,6 +284,7 @@ namespace CleverHome_1._1
                 label8.Text = "Дверь открыта";
             }
         }
+
 
         private Boolean proverkaopendoors()
         {
@@ -301,7 +301,4 @@ namespace CleverHome_1._1
             } 
         }
     }
-   
-    
-
 }

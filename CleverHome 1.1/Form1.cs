@@ -23,16 +23,16 @@ namespace CleverHome_1._1
         bool provopendoors = false;
         bool ventil = false;
         SerialPort serialport;
-        String temper, hidim, dostup;
-
-        int a;  //хранит значение техтбокс3
+        String temper, hidim, temphran, tempkesson, tempkitchen, sensorRain;
+        String dostup = "111111111";
+        int a;  //хранит значение техтбокс3   доступ
         public Form1()
         {
             InitializeComponent();      
             timer1.Enabled = true;  //таймер времени        
             timer1.Interval = 1000;        
             timer2.Interval = 2000;   //таймер отопления
-            timer3.Interval = 3000;   //таймер открытия двери
+            timer3.Interval = 1000;   //таймер открытия двери
             DateTime data = DateTime.Now;
         }
 
@@ -44,22 +44,34 @@ namespace CleverHome_1._1
                 if (DataString.Contains(":"))
                 {
                     string[] word = DataString.Split(':');
-                    temper = word[0];
-                    hidim = word[1];
-                    dostup = word[2];
-                    this.BeginInvoke(new LineReceivedEvent(LineReceived), temper, hidim, dostup);
+                    
+                    tempkitchen = word[0];
+                    tempkesson = word[1];
+                    temphran = word[2];
+                    temper = word[3];
+                    hidim = word[4];
+                    dostup = word[5];
+                    sensorRain = word[6];
+
+                    this.BeginInvoke(new LineReceivedEvent(LineReceived),tempkitchen, tempkesson, temphran, temper, hidim, dostup,sensorRain);
                 }
             }
             catch (Exception exException) { };
         }
 
-        private delegate void LineReceivedEvent(string temper, string hidim,string dostup);
+        private delegate void LineReceivedEvent(string tempkitchen, string tempkesson, string temphran, string temper, string hidim, string dostup,string sensorRain);
 
-        private void LineReceived(string temper, string hidim,string dostup)
+        private void LineReceived(string tempkitchen, string tempkesson, string temphran, string temper, string hidim, string dostup, string sensorRain)
         {
             textBox1.Text = temper;
             textBox2.Text = hidim;
             textBox3.Text = dostup;
+            textBox6.Text = tempkitchen;
+            textBox7.Text = tempkesson;
+            textBox8.Text = temphran;
+            textBox9.Text = sensorRain;
+
+
         }
 
      
@@ -280,7 +292,7 @@ namespace CleverHome_1._1
             else
             {
                 a = Int32.Parse(textBox3.Text);
-                if (a == 8409)
+               if (a == 8409)
                     label8.Text = "Дверь закрыта";
                 serialport.Write("30");
                 opendoors( false);              

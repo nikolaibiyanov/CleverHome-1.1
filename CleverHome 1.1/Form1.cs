@@ -62,10 +62,7 @@ namespace CleverHome_1._1
             textBox3.Text = dostup;
         }
 
-        private void LineReceived(string dostup)
-        {
-            textBox3.Text = dostup;
-        }
+     
         
         private void button1_Click(object sender, EventArgs e)      //включчение реле
         {
@@ -283,7 +280,7 @@ namespace CleverHome_1._1
             else
             {
                 a = Int32.Parse(textBox3.Text);
-                if (a == 872227033)
+                if (a == 8409)
                     label8.Text = "Дверь закрыта";
                 serialport.Write("30");
                 opendoors( false);              
@@ -321,17 +318,20 @@ namespace CleverHome_1._1
 
         private Boolean proverkaopendoors()
         {
-            a = Int32.Parse(textBox3.Text);
-            if (a==872227033)
-            {             
-                provopendoors = true;
-                return provopendoors;     
-            }
-            else
-            { 
-                provopendoors = false;
-                return provopendoors;
-            } 
+           
+                a = Int32.Parse(textBox3.Text);
+                if (a == 8409)
+                {
+                    provopendoors = true;
+                    return provopendoors;
+                }
+                else
+                {
+                    provopendoors = false;
+                    return provopendoors;
+                }
+          
+           
         }
     }
 }
